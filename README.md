@@ -47,7 +47,7 @@ A fast, interactive unit converter covering everyday, scientific, and industrial
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/username/unit-converter.git](https://github.com/username/unit-converter.git)
+   git clone [https://github.com/chetan3798/unit-conversion.git](https://github.com/chetan3798/unit-conversion.git)
    cd unit-converter
    ```
 
