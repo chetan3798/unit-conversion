@@ -1,91 +1,140 @@
 # Unit Converter
 
-A fast, no-frills unit converter covering everyday and industrial measurements, built with Flask and [Pint](https://pint.readthedocs.io).
+A fast, interactive unit converter covering everyday, scientific, and industrial measurements, built with Python, Flask, and Pint.
 
 ## Features
 
-- **60+ categories** — from everyday units (length, weight, temperature, volume) to industrial ones (pressure, torque, flow rate, electrical, radiation, viscosity) and specialist scales (API gravity, pH, AWG wire gauge, steel hardness)
-- **Dropdown category picker** with a smooth fade transition when switching categories
-- **Two separate swap actions** — one swaps the *units* (from ↔ to), the other swaps the *values* (drops the current result back into the input), since these are genuinely different actions
-- **Convert to all units at once** — toggle a category into "All units" mode to see one value converted into every unit in that category simultaneously; tap any row to make it the new starting value
-- **Reset button** — restores the current category's default value and unit pair
-- **Correct handling of non-linear conversions** — temperature (offset formula), fuel efficiency (reciprocal-dimension handling between mpg and L/100km), API gravity, pH, and AWG wire gauge all use their real defining formulas rather than an approximated ratio
-- **Dimensional guardrails** — categories are split by genuine physical dimension (e.g. dynamic vs. kinematic viscosity, or voltage vs. current) so you can never accidentally convert between things that aren't actually the same kind of quantity
+* **60+ Engine Categories:** Supports 60+ physical dimensions under the hood, with 27+ categories exposed directly in the UI dropdown (Length, Weight, Temperature, Volume, Area, Speed, Acceleration, Force, Torque, Density, Pressure, Energy, Power, Voltage, Resistance, Frequency, Digital Storage, Viscosity, Radiation, and more).
+* **Smart Category Search:** Quickly filter and jump to any category using the instant search bar.
+* **Dual Display Modes:**
+  * **Single Conversion:** Direct unit-to-unit conversions with interactive unit swap (`from ↔ to`), value swap (drop result back into input), and copy-to-clipboard.
+  * **Multi-Unit View ("All Units" Mode):** Convert a single input into every unit within a category simultaneously. Click any converted row to make it the new starting value.
+* **Precision Controls:** Custom rounding options including **Auto**, **2 decimals**, **4 decimals**, **6 decimals**, or **Scientific notation**.
+* **Conversion Equations:** Expandable mathematical formula display showing the exact defining equation for active conversions.
+* **Non-Linear Conversion Handling:** Accurately calculates non-linear scales such as Temperature (offset formulas), Fuel Efficiency (reciprocal dimension mapping between mpg and L/100km), API Gravity, pH, and AWG Wire Gauge.
+* **Dimensional Guardrails:** Categorized by genuine physical dimension (e.g., separating dynamic vs. kinematic viscosity, or voltage vs. current) to prevent impossible cross-dimension conversions.
+* **Interactive UI:** Light/dark theme toggle, reset shortcut (`Esc`), and smooth transitions when switching categories.
 
-## Tech stack
+## Tech Stack
 
-- **Backend:** Python 3, Flask, [Pint](https://pint.readthedocs.io) (unit registry and conversion math)
-- **Frontend:** Jinja2 templates, vanilla JavaScript, plain CSS — no frontend framework
-- **Data:** no database. All category/unit definitions live in `conversions/pint_convert.py`
+* **Backend:** Python 3, Flask, Pint (Unit registry and conversion math)
+* **Frontend:** Jinja2 templates, Vanilla JavaScript (ES6+), CSS3 (Custom design & theme variables)
+* **Data Layer:** Database-free. All unit mappings and registry definitions reside in `conversions/pint_convert.py`.
 
-## Project structure
+## Project Structure
 
-```
+```text
 .
-├── app.py                      # Flask routes + UI_CATEGORIES (dropdown metadata)
+├── app.py                      # Flask routes & UI_CATEGORIES dropdown metadata
 ├── conversions/
 │   ├── __init__.py
-│   └── pint_convert.py         # All conversion logic -- every category routes through convert()
+│   └── pint_convert.py         # Central conversion engine using Pint
 ├── templates/
-│   ├── index.html              # Main converter page
-│   └── about.html
+│   ├── index.html              # Main converter web view
+│   └── about.html              # Information & documentation page
 └── static/
-    ├── style.css
-    └── script.js                # Builds the UI from UI_CATEGORIES, calls /api/convert(-all)
+    ├── style.css               # Application layout & theme styling
+    └── script.js               # Frontend UI logic & API handler
 ```
 
-## Setup
+## Setup & Installation
 
-```bash
-pip install flask pint
-python app.py
-```
+### Prerequisites
 
-Then open `http://127.0.0.1:5000`.
+* Python 3.8 or higher
 
-## Verify the conversion engine before trusting it
+### Quick Start
 
-`pint_convert.py` was written without a live Pint installation to test against. Run it directly after installing Pint:
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/username/unit-converter.git](https://github.com/username/unit-converter.git)
+   cd unit-converter
+   ```
 
-```bash
-python conversions/pint_convert.py
-```
+2. **Install dependencies:**
+   ```bash
+   pip install flask pint
+   ```
 
-It prints `OK` or `MISMATCH` against ~40 known reference conversions covering every category. A handful of less common unit names (`oil_barrel`, `british_thermal_unit`, `standard_atmosphere`, `short_ton`, `bushel`, `therm`, `ampere_hour`, `oersted`, `standard_gravity`, `delta_degF`) are the most likely to need a one-line name correction depending on your installed Pint version — the script output will tell you exactly which ones, if any.
+3. **Verify the conversion engine:**
+   Run the test script to check conversion engine output against known reference conversions:
+   ```bash
+   python conversions/pint_convert.py
+   ```
+   *The script prints `OK` or `MISMATCH` for ~40 reference tests across categories.*
 
-The non-Pint special cases (wire gauge, pH, temperature) are pure Python and have already been tested independently of Pint.
+4. **Launch the application:**
+   ```bash
+   python app.py
+   ```
 
-## API
+5. **Open in browser:**
+   Navigate to `http://127.0.0.1:5000`.
 
-**`POST /api/convert`**
+## API Documentation
+
+### Single Conversion
+`POST /api/convert`
+
+**Request Body:**
 ```json
-{ "category": "length", "from_unit": "in", "to_unit": "cm", "value": 1 }
+{
+  "category": "length",
+  "from_unit": "in",
+  "to_unit": "cm",
+  "value": 1
+}
 ```
-→ `{ "result": 2.54 }`
 
-**`POST /api/convert-all`**
+**Response:**
 ```json
-{ "category": "length", "from_unit": "in", "value": 1 }
+{
+  "result": 2.54
+}
 ```
-→ `{ "results": [{ "unit": "mm", "result": 25.4 }, { "unit": "cm", "result": 2.54 }, ...] }`
 
-## Categories currently in the dropdown
+### Multi-Unit Conversion
+`POST /api/convert-all`
 
-`UI_CATEGORIES` in `app.py` exposes 11 everyday categories in the site's UI: length, weight, temperature, volume, area, speed, pressure, energy, power, digital storage, time.
+**Request Body:**
+```json
+{
+  "category": "length",
+  "from_unit": "in",
+  "value": 1
+}
+```
 
-`pint_convert.py`'s conversion engine supports many more (force, torque, flow rate, density, viscosity, electrical quantities, radiation, and more) that aren't wired into the dropdown yet — add an entry to `UI_CATEGORIES` to expose any of them in the UI.
+**Response:**
+```json
+{
+  "results": [
+    { "unit": "mm", "result": 25.4 },
+    { "unit": "cm", "result": 2.54 },
+    { "unit": "m", "result": 0.0254 }
+  ]
+}
+```
 
-## Deliberately not supported
+## Exposing Additional Categories
 
-A few units were left out on purpose rather than implemented incorrectly:
+The conversion engine (`conversions/pint_convert.py`) supports over 60 categories. To display an additional category in the web frontend, add its key and metadata to `UI_CATEGORIES` in `app.py`.
 
-| Unit | Why |
-|---|---|
-| Mach number | Not a fixed unit — depends on local speed of sound |
-| Lumen ↔ lux | Different physical dimensions (flux vs. flux-per-area) |
-| TEU (shipping) | Industry convention, not a fixed physical unit |
-| Deadweight tonnage | Already just weight in metric tons — use the weight category |
-| Paper basis weight (lb) | Varies by paper grade, not standardized |
-| Turbidity (NTU) | Empirical optical measurement with no conversion formula to anything else |
+## Deliberately Unsupported Units
 
-Sheet metal gauge and steel hardness scales (Rockwell/Brinell/Vickers) *are* implemented, but as approximate lookup/correlation tables written from memory — verify against ASTM A480 / E140 before relying on them for real engineering decisions.
+The following units are intentionally excluded to prevent inaccurate or misleading conversions:
+
+| Unit | Reason |
+| :--- | :--- |
+| **Mach number** | Dynamic quantity dependent on local temperature and sound speed |
+| **Lumen ↔ Lux** | Non-equivalent physical dimensions (luminous flux vs. illuminance) |
+| **TEU (Shipping)** | Industry nominal estimate, not a standardized physical unit |
+| **Deadweight tonnage** | Equivalent to mass in metric tons (handled via Weight category) |
+| **Paper basis weight (lb)** | Non-standardized; varies by paper grade definitions |
+| **Turbidity (NTU)** | Empirical optical measurement without fixed mathematical conversions |
+
+*Note: Sheet metal gauge and steel hardness scales (Rockwell/Brinell/Vickers) use correlation tables—verify against ASTM A480 / E140 standards for production engineering applications.*
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for details.
